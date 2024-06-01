@@ -1,0 +1,313 @@
+---
+title: "stp25tools"
+date: "`r Sys.Date()`"
+output:
+  github_document
+---
+<!--   html_document: -->
+<!--     toc: true -->
+<!--     toc_float: true -->
+<!-- github_document -->
+
+<!-- badges: start -->
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
+[![CRAN status](https://www.r-pkg.org/badges/version/stp25stat2)](https://CRAN.R-project.org/package=stp25stat2)
+<!-- badges: end -->
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warnings=FALSE)
+require(stp25tools)
+require(stp25meta)
+#require(effects)
+require(magrittr)
+```
+# Meta-Analyse
+
+Eine Meta-Analyse ist ein statistisches Verfahren, das die Ergebnisse mehrerer Studien zur gleichen Fragestellung zusammenfasst und daraus ein aussagekräftigeres Ergebnis errechnet.
+
+
+-   Kombiniert die Ergebnisse von 2 oder mehreren Studien
+-   Schätzt einen mittleren oder gemeinsamen Effekt
+-   kontinuierliche Daten: Mittelwert, z-Werte
+-   dichotome Daten: Anteil, OR, RR
+
+
+Quelle: <https://www.gesundheit.gv.at/lexikon/M/lexikon-meta-analyse.html>
+
+
+
+## Continuous Outcome Data
+
+The SMD is used in the meta-analysis of continuous data if studies
+included in the analysis measured the same outcome but on different
+measurement instruments.
+
+The WMD is used in meta-analysis of continuous data if all studies
+included in the meta-analysis measured the same outcome on the same
+measurement instrument. Tufanaru 2015
+
+Between-Group Standardized Mean Difference (SMD), Cohen's d
+
+-   SMD ≈ 0.20: small effect.
+-   SMD ≈ 0.50: moderate effect.
+-   SMD ≈ 0.80: large effect.
+
+Mean difference (MD, or more correctly, ‘difference in means’), 
+
+standardized mean difference (SMD)
+
+
+ $g ={\frac  {{\bar  {x}}_{1}-{\bar  {x}}_{2}}{s^{*}}}$
+
+$s^{*}={\sqrt  {{\frac  {(n_{1}-1)s_{1}^{2}+(n_{2}-1)s_{2}^{2}}{n_{1}+n_{2}-2}}}}$
+
+
+$d={\frac  {{\bar  {x}}_{1}-{\bar  {x}}_{2}}{{\sqrt  {(s_{1}^{2}+s_{2}^{2})/2}}}}$
+
+Andere nicht so oft gebräuchliche Masszahlen:
+ratio of means (RoM),
+minimal important differences (MID)
+
+
+
+Folgende Werte sind in den Studien zu finden:
+mean, standard deviation, number of participants in each intervention group.
+
+Least squares means (LS Means) are actually a sort of SAS jargon. Least square means is actually referred to as marginal means (or sometimes EMM - estimated marginal means).
+
+When a confidence interval (CI) is available for an absolute effect measure (e.g. standardized mean difference, risk difference, rate difference), then the SE can be calculated as
+ 
+$SE=(uper -lower)/3.92$   bei großen Stichproben (n>60) mit den Werten 99%-CI = 5.15, 95%-CI = 3.92, 90%-CI = 3.29 
+dere exakte Wert kann berechnet werden mit pt(1-.95, 60)
+
+$SE = |\frac{MD}{t}|$
+
+within-group SD:  $SD = \frac{SE}{\sqrt{n^{-1}_t + n^{-1}_c}}$
+
+$SD = SE\sqrt{N}$
+
+
+As an example, consider data presented as follows:
+
+Group |Sample size | Mean| 95% CI
+------|------------|-----|------
+Experimental intervention|25| 32.1| (30.0, 34.2)
+Comparator intervention|22|28.3| (26.5, 30.1)
+
+The SD for this group is $\sqrt{25}\cdot(34.2–30.0)/4.128=5.09$
+
+```{r}
+sd_from_ci(30.0, 34.2, 25)
+```
+ 
+mean difference (MD, or more correctly, ‘difference in means’)
+Standardized mean difference (SMD) = Hedges g $SMD= MD/SD$
+
+
+
+### Combining groups
+
+ 
+ sample size $n =n_1 + n_2$
+ 
+ mean $m =  \frac{n_1m_1 + n_2m_2}{n_1 +n_2}$
+ 
+ sd $sd = \sqrt\frac{(n_1-1)sd^2_1 + (n_2-1) sd^2_2 + \frac{n_1n_2}{n_1+n_2}(m^2_1 - 2m_1m_2+m^2_2)}{n_1 +n_2-1}$
+ 
+ 
+ 
+```{r}
+dat <-
+  data.frame(
+    author= c("A", "B"),
+    cn = c(134, 38),
+    cm = c(5.96, 5.34),
+    csd = c(4.24, 4),
+    
+    tn = c(113, 35),
+    tm = c(6.82, 6.12),
+    tsd = c(4.72, 4.32)
+  )
+
+combining(dat)
+```
+
+
+### Converting Among Effect Sizes
+
+```{r, include=FALSE}
+dat_BMI <- stp25tools::get_data("
+id author            year	tm1	tsd1	tn	 tm2	tsd2	cm1	csd1	cn	cm2	csd2	 tm	tsd	cm	csd	md	se
+1 'Benson'           2008	24	5.4	31	24	5.5	22.1	3.6	36	22.5	3.5	-0.01	0.8	0.4	0.7 NA NA
+2 'Costigan (AEP)'   2015	21.72	4.75	21	21.8	4.67	22.29	4.42	22	22.63	4.34	NA	NA	NA	NA	-0.27	  2.39
+2 'Costigan (RAP)'   2015	22	  4.42	22	22.07	4.33	22.29	4.42	22	22.63	4.34	NA	NA	NA	NA	  -0.28	  2.312
+2 'Costigan'        2015	22	  4.585	22	22.25	4.50	22.29	4.42	22	22.63	4.34	NA	NA	NA	NA	-0.275	2.312
+3 'Dorgo (MRT)'     2009	24.4	6.35	63	24.5	6.35	24.9	4.96	129	24.6	4.96	NA	NA	NA	NA	NA	NA
+3 'Dorgo (MRT + E)' 2009	24.8	6.57	30	24.7	6.57	24.9	4.96	129	24.6	4.96	NA	NA	NA	NA	NA	NA
+3 'Dorgo'           2009	24.53	6.39	93	24.56	6.39	24.9	4.96	129	24.6	4.96	NA	NA	NA	NA	NA	NA
+4 'Eather'   2016	21.6	3	49	21.5	3	20.6	3.7	34	21.7	1.3	NA	NA	NA	NA	-1.3	1.28
+6 'Kennedy'   2018	21.92	2.14	294	22.01	2.14	22.57	2.34	211	22.55	2.34	NA	NA	NA	NA	0.11	0.168
+7 'McMurray'   2002	22.5	5.358	319	NA	NA	21.4	4.714	247	NA	NA	0.21	0.893	0.23	0.942	NA	NA
+8 'Muros'   2015	19.7	3.4	28	19.7	3.3	20.9	4.1	41	21.1	4	NA	NA	NA	NA	NA	NA
+9 'Sadowsky'   1999	20.5	3.3	39	20.3	3.3	20.3	2.2	22	20.35	2.2	-0.197	0.472	0.0409	0.4027	NA	NA
+10 'Torbeyns'   2017	19.7	3.5	21	19.9	3.2	20.1	3.7	23	20.5	3.5	NA	NA	NA	NA	NA	NA
+11 'Velez'   2010	24.6	4.7	13	24.9	4.9	22.1	2.8	15	22	2.4	NA	NA	NA	NA	NA	NA
+13 'Weeks'   2012	20	3.5	47	20.5	3.3	20	3.5	52	20.4	3.3	NA	NA	NA	NA	NA	NA
+",  na.strings="NA")
+
+
+
+dat_BMI<- dat_BMI[-c(2,3,5,6),]
+
+```
+
+Die Daten müssen genau mit diese Variablen-Namen vorliegen dann können sie automatisch mit `convert` in MD und SD convertiert werden.
+
+```{r}
+head(dat_BMI)
+
+BMI <- convert(dat_BMI)
+
+head(BMI)
+```
+
+
+
+```{r}
+require(meta)
+
+m_bmi <- meta::metacont(
+  tn, tm, tsd,
+  cn, cm, csd,
+  sm = "MD",
+  studlab = paste(author, year),
+  data = BMI
+)
+m_bmi
+```
+
+
+Workaround da in den Studien auch die exakten Effekte berichtet wurden.
+```{r}
+BMI$md <- ifelse( is.na( BMI$md),  round(m_bmi$TE,2), BMI$md)
+BMI$se <- ifelse(is.na(BMI$se ), round(m_bmi$seTE,2) , BMI$se )
+
+m.gen.bmi <- metagen(
+  TE = md,
+  seTE = se,
+  studlab = paste(author, year),
+  data = BMI,
+  sm = "MD",
+  fixed = FALSE,
+  random = TRUE,
+  method.tau = "REML",
+  hakn = TRUE,
+  title = "BMI"
+)
+```
+
+
+ 
+```{r}
+# Forest plot using JAMA style
+#
+# settings.meta("JAMA")
+#
+# settings.meta("RevMan5")
+settings.meta(reset =TRUE)
+forest(m.gen.bmi,  leftcols = c('studlab'),
+       digits.tau2 = 2,
+       digits.tau=2,
+       xlim=c(-2.5,2.5),
+       title = "BMI")
+```
+
+
+
+
+
+
+
+
+
+
+Beim **Fixed-Effect-Modell** geht man davon aus, dass der zugrunde
+liegende Effekt in allen Studien gleich ist. Sämtliche Studien liefern
+diselben Ergebnisse (same population, they have used the same inclusion
+criteria, the treatments have been given in the same way, and outcomes
+have been measured consistently.) Beim **Random-effects model** kommt
+hingegen eine zusätzliche Variabilität hinzu (heterogenen Effekten).
+
+
+
+
+ 
+
+## Berechnung mit *meta*
+
+| Endpunkt                    | Effektschätzer                             | library(meta)                              |
+|------------------|----------------------------|-------------------------|
+| binary (2 × 2 table)        | OR, RR, RD (experimental vs control group) | metabin()                                  |
+| continuous ( Messwert/Zahl) | MD, SMD, ROM ( SMD = g )                   | metacont() metamean()                      |
+| incidence rates             | IR, IRLN, IRS, IRFT                        | metainc( event.e, time.e, event.c, time.c) |
+| Korrelation (single)        | ZCOR, COR                                  | metacor()                                  |
+| Proportions (single)        | PLOGIT, PFT                                | metaprop( event, n)                        |
+| mean (single)               | MRAW, MLN                                  | metamean( n, mean, sd)                     |
+| incidence (single)          |                                            | metarate (event, time)                     |
+
+incidence rates = relative Häufigkeit von Ereignissen
+
+
+
+
+
+
+
+
+
+
+## Librarys
+
+    pkgs <- c("mada", "meta", "metafor",
+    "metasens", "mvmeta", "netmeta", "rmeta", "ellipse")
+
+    install.packages(pkgs, repos="http://cran.rstudio.com/")
+     
+
+-   [meta](http://cran.r-project.org/web/packages/meta/index.html)
+    General Package for Meta-Analysis
+
+-   [mada](http://cran.r-project.org/web/packages/mada/index.html)
+    Meta-Analysis of Diagnostic Accuracy
+
+-   [metafor](http://cran.r-project.org/web/packages/metafor/index.html)
+    General Package for Meta-Analysis
+
+-   [metasens](http://cran.r-project.org/web/packages/metasens/index.html)
+    Sensitivity Analysis in Meta-Analysis
+
+-   [mvmeta](http://cran.r-project.org/web/packages/mvmeta/index.html)
+    Meta-Regression. Der Autor hat under dem Linmk
+    <http://www.ag-myresearch.com/> **Beispielcode** mit den
+    entsprechenden Artikeln.
+
+-   [netmeta](http://cran.r-project.org/web/packages/netmeta/index.html)
+    Network Meta-Analysis
+
+-   [rmeta](http://cran.r-project.org/web/packages/rmeta/index.html)
+    Meta-Analysis
+
+### Literatur
+
+Harrer, M., Cuijpers, P., Furukawa, T. A., & Ebert, D. D. (o. J.).
+Chapter 3 effect sizes \| doing meta-analysis in r. Abgerufen 12. Januar
+2023, von
+<https://bookdown.org/MathiasHarrer/Doing_Meta_Analysis_in_R/effects.html>
+
+dmetar Companion r package for the guide doing meta-analysis in r. (o.
+J.). Abgerufen 12. Januar 2023, von <https://dmetar.protectlab.org/>
+
+Tufanaru, C., Munn, Z., Stephenson, M., & Aromataris, E. (2015). Fixed
+or random effects meta-analysis? Common methodological issues in
+systematic reviews of effectiveness. JBI Evidence Implementation, 13(3),
+196. <https://doi.org/10.1097/XEB.0000000000000065>
