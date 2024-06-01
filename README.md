@@ -48,11 +48,11 @@ Mean difference (MD, or more correctly, ‘difference in means’),
 
 standardized mean difference (SMD)
 
-$g ={\frac  {{\bar  {x}}_{1}-{\bar  {x}}_{2}}{s^{*}}}$
+$g ={\frac{{\bar{x}}_{1}-{\bar{x}}_{2}}{s^{*}}}$
 
-$s^{*}={\sqrt  {{\frac  {(n_{1}-1)s_{1}^{2}+(n_{2}-1)s_{2}^{2}}{n_{1}+n_{2}-2}}}}$
+$s^{*}={\sqrt{{\frac{(n_{1}-1)s_{1}^{2}+(n_{2}-1)s_{2}^{2}}{n_{1}+n_{2}-2}}}}$
 
-$d={\frac  {{\bar  {x}}_{1}-{\bar  {x}}_{2}}{{\sqrt  {(s_{1}^{2}+s_{2}^{2})/2}}}}$
+$d={\frac{{\bar{x}}_{1}-{\bar{x}}_{2}}{{\sqrt{(s_{1}^{2}+s_{2}^{2})/2}}}}$
 
 Andere nicht so oft gebräuchliche Masszahlen: ratio of means (RoM),
 minimal important differences (MID)
@@ -308,12 +308,12 @@ incidence rates = relative Häufigkeit von Ereignissen
 ### Literatur
 
 Harrer, M., Cuijpers, P., Furukawa, T. A., & Ebert, D. D. (o. J.).
-Chapter 3 effect sizes \| doing meta-analysis in r. Abgerufen 12. Januar
+Chapter 3 effect sizes doing meta-analysis in r. Abgerufen 12. Januar
 2023, von
 <https://bookdown.org/MathiasHarrer/Doing_Meta_Analysis_in_R/effects.html>
 
-dmetar Companion r package for the guide doing meta-analysis in r. (o.
-J.). Abgerufen 12. Januar 2023, von <https://dmetar.protectlab.org/>
+dmetar Companion r package for the guide doing meta-analysis in r.
+(o.J.). Abgerufen 12. Januar 2023, von <https://dmetar.protectlab.org/>
 
 Tufanaru, C., Munn, Z., Stephenson, M., & Aromataris, E. (2015). Fixed
 or random effects meta-analysis? Common methodological issues in
